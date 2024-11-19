@@ -1,4 +1,4 @@
-name: CI/CD Workflow
+name: Java CI/CD Workflow
 
 on:
   push:
@@ -14,16 +14,25 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    - name: Set up JDK
+      uses: actions/setup-java@v3
       with:
-        node-version: '16'
+        java-version: '17' # Adaptez à la version de Java utilisée
+        distribution: 'temurin'
 
-    - name: Install dependencies
-      run: npm install
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+
+    - name: Build project with Maven
+      run: mvn clean install
 
     - name: Run tests
-      run: npm test
+      run: mvn test
 
   snyk-security-scan:
     runs-on: ubuntu-latest
@@ -33,10 +42,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    - name: Set up JDK
+      uses: actions/setup-java@v3
       with:
-        node-version: '16'
+        java-version: '17'
+        distribution: 'temurin'
 
     - name: Install Snyk CLI
       run: npm install -g snyk
@@ -47,7 +57,4 @@ jobs:
       run: snyk auth $SNYK_TOKEN
 
     - name: Run Snyk test for vulnerabilities
-      run: snyk test
-
-    - name: Monitor project in Snyk
-      run: snyk monitor
+      run: snyk test --file=pom.xml --package-manager=maven
