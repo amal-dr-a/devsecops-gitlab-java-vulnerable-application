@@ -51,13 +51,22 @@ jobs:
     - name: Install Snyk CLI
       run: npm install -g snyk
 
+    - name: Verify Snyk installation
+      run: snyk --version
+
     - name: Authenticate Snyk
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       run: snyk auth $SNYK_TOKEN
 
+    - name: Validate Maven build
+      run: mvn validate
+
+    - name: List project files
+      run: ls -R
+
     - name: Run Snyk test for vulnerabilities
-      run: snyk test --file=pom.xml --package-manager=maven --json > snyk-report.json
+      run: snyk test --file=pom.xml --package-manager=maven --json --debug > snyk-report.json
 
     - name: Upload Snyk report as an artifact
       uses: actions/upload-artifact@v3
